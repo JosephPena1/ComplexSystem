@@ -8,17 +8,17 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/CapsuleComponent.h"
 
-#include "ReverseTime.generated.h"
+#include "TimeControlComponent.generated.h"
 
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
-class TESTPROJECT_API UReverseTime : public UActorComponent
+class TESTPROJECT_API UTimeControlComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:
+public:	
 	// Sets default values for this component's properties
-	UReverseTime();
+	UTimeControlComponent();
 
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -26,29 +26,41 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	//Toggles b_isReversing
 	UFUNCTION(BlueprintCallable)
-	void ToggleReverse();
+	//Toggles b_IsPaused
+	void TogglePause();
 
 private:
+	int PauseActor();
+	int PauseCharacter();
+
+	int ForwardActor();
+	int ForwardCharacter();
+
 	int ReverseActor();
 	int ReverseCharacter();
 
+	void NormalTimeActor();
+	void NormalTimeCharacter();
+
 public:
 	UPROPERTY(BlueprintReadWrite)
-	bool b_isReversing = false;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//The Time between saving positions
-	float Delay = 0.0f;
+		bool b_IsPaused = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//Max array size, set to 0 for no limit
-	int MaxPositions = 0;
+		//The Time between saving positions
+		float Delay = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		//Max array size, set to 0 for no limit
+		int MaxPositions = 0;
 
 private:
 	TArray<FTransform> TransformArray;
 	TArray<FTransform> VelocityArray;
+	int IteratorIndex = 0;
+	bool b_IterSet = false;
+	bool b_IsDirty = false;
 
 	AActor* Actor = nullptr;
 	ACharacter* Character = nullptr;

@@ -17,7 +17,7 @@ void UReverseTime::BeginPlay()
 	Super::BeginPlay();
 
 	Actor = GetOwner();
-	Character = (ACppCharacter*)UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	Character = (ACharacter*)UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
 	Mesh = Actor->FindComponentByClass<UStaticMeshComponent>();
 	CapsuleComp = Actor->FindComponentByClass<UCapsuleComponent>();
 
@@ -61,16 +61,7 @@ int UReverseTime::ReverseActor()
 			return 0;
 		}
 
-		//Set up transforms to interpolate
-		FTransform Transform1 = Mesh->GetComponentTransform();
-		FTransform Transform2 = TransformArray[TransformIndex];
-		float alpha = 0.5f;
-
-		//Interpolate
-		FTransform Transform;
-		Transform.SetTranslation(FMath::Lerp(Transform1.GetTranslation(), Transform2.GetTranslation(), alpha));
-		Transform.SetRotation(Transform2.GetRotation());
-		Transform.SetScale3D(FMath::Lerp(Transform1.GetScale3D(), Transform2.GetScale3D(), alpha));
+		FTransform Transform = TransformArray[TransformIndex];
 
 		//Set the Meshs [Transform] and [Linear Velocity]
 		Mesh->SetWorldTransform(Transform);
@@ -142,9 +133,6 @@ int UReverseTime::ReverseCharacter()
 		CapsuleComp->SetWorldTransform(Transform);
 		CapsuleComp->SetPhysicsLinearVelocity(Transform.GetLocation());
 
-		PhysicsVelocity = Transform;
-		b_RecentChange = true;
-
 		//If the index is not at 0, Remove the last index in the array
 		if (TransformIndex > 0)
 			TransformArray.RemoveAt(TransformIndex);
@@ -164,11 +152,11 @@ int UReverseTime::ReverseCharacter()
 	//If not reversing add current [Transform] and [Velocity] into array
 	else if (Timer <= 0)
 	{
-		if (b_RecentChange)
-		{
-			CapsuleComp->SetWorldRotation(PhysicsVelocity.GetRotation());
-			b_RecentChange = false;
-		}
+		//Removes the first index if the max amount is reached
+		if (TransformArray.Num() == MaxPositions && MaxPositions > 0)
+			TransformArray.RemoveAt(0, 1, true);
+		if (VelocityArray.Num() == MaxPositions && MaxPositions > 0)
+			VelocityArray.RemoveAt(0, 1, true);
 
 		//Adds the current transform into the [Transform Array]
 		TransformArray.Add(CapsuleComp->GetComponentTransform());
@@ -186,6 +174,7 @@ int UReverseTime::ReverseCharacter()
 	return 0;
 }
 
+//Toggles b_isReversing
 void UReverseTime::ToggleReverse()
 {
 	b_isReversing = !b_isReversing;
