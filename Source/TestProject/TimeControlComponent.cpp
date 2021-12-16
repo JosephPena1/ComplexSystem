@@ -43,10 +43,12 @@ void UTimeControlComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 	//If the game is unpaused, remove everything from the iterator to the end of the array
 	if (b_IsDirty)
 	{
-		//Gets the index ahead of the current Iterator if not 0
-		int TempIter = (IteratorIndex > 0) ? IteratorIndex + 1 : IteratorIndex;
-		TransformArray.RemoveAt(TempIter, TempIter - TransformArray.Num(), true);
-		VelocityArray.RemoveAt(TempIter, TempIter - VelocityArray.Num(), true);
+		for (int i = IteratorIndex; i < TransformArray.Num(); i++)
+		{
+			TransformArray.RemoveAt(i, 1, true);
+			VelocityArray.RemoveAt(i, 1, true);
+		}
+
 		IteratorIndex = 0;
 		b_IterSet = false;
 		b_IsDirty = false;
@@ -76,6 +78,12 @@ void UTimeControlComponent::TogglePause()
 {
 	b_IsPaused = !b_IsPaused;
 	b_IsDirty = (IteratorIndex != 0);
+
+	if (b_RecentChange)
+	{
+		Mesh->SetPhysicsLinearVelocity(PhysicsVelocity.GetLocation());
+		Mesh->SetPhysicsAngularVelocity(PhysicsVelocity.GetScale3D());
+	}
 }
 
 //Keeps the actor frozen
@@ -120,7 +128,7 @@ int UTimeControlComponent::ForwardActor()
 
 	IteratorIndex += 1;
 	//Returns if at the last Index
-	if (IteratorIndex > TransformArray.Num())
+	if (IteratorIndex > TransformArray.Num() - 1)
 	{
 		IteratorIndex = TransformArray.Num() - 1;
 		return 2;
@@ -289,4 +297,3 @@ void UTimeControlComponent::NormalTimeCharacter()
 	VelocityArray.Add(NewVelocity);
 	Timer = Delay;
 }
-

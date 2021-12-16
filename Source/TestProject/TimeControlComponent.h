@@ -30,15 +30,17 @@ public:
 	//Toggles b_IsPaused
 	void TogglePause();
 
-private:
-	int PauseActor();
-	int PauseCharacter();
-
+	UFUNCTION(BlueprintCallable)
 	int ForwardActor();
 	int ForwardCharacter();
 
+	UFUNCTION(BlueprintCallable)
 	int ReverseActor();
 	int ReverseCharacter();
+
+private:
+	int PauseActor();
+	int PauseCharacter();
 
 	void NormalTimeActor();
 	void NormalTimeCharacter();
