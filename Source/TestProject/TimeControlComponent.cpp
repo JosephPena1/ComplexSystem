@@ -45,7 +45,7 @@ void UTimeControlComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 		TransformArray.RemoveAt(IteratorIndex, TransformArray.Num() - IteratorIndex, true);
 		VelocityArray.RemoveAt(IteratorIndex, VelocityArray.Num() - IteratorIndex, true);
 
-		IteratorIndex = 0;
+		//Reset Iterator, Supposed problems?
 		b_IterSet = false;
 		b_IsDirty = false;
 	}
@@ -73,7 +73,7 @@ void UTimeControlComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 void UTimeControlComponent::TogglePause()
 {
 	b_IsPaused = !b_IsPaused;
-	b_IsDirty = (IteratorIndex != 0);
+	b_IsDirty = (IteratorIndex != 0 || b_IterSet);
 
 	if (b_RecentChange)
 	{
@@ -119,11 +119,11 @@ int UTimeControlComponent::PauseCharacter()
 //Moves the Actor forwards in time
 int UTimeControlComponent::ForwardActor()
 {
-	if (!Mesh)
+	if (!Mesh || !b_IsPaused)
 		return 1;
 
 	IteratorIndex += 1;
-	//Returns if at the last Index
+	//Return if at 0
 	if (IteratorIndex > TransformArray.Num() - 1)
 	{
 		IteratorIndex = TransformArray.Num() - 1;
@@ -150,11 +150,11 @@ int UTimeControlComponent::ForwardActor()
 //Moves the Character forwards in time
 int UTimeControlComponent::ForwardCharacter()
 {
-	if (!CapsuleComp)
+	if (!CapsuleComp || !b_IsPaused)
 		return 1;
 
 	IteratorIndex += 1;
-	//Returns if at the last Index
+	//Return if at 0
 	if (IteratorIndex > TransformArray.Num())
 	{
 		IteratorIndex = TransformArray.Num() - 1;
@@ -179,13 +179,13 @@ int UTimeControlComponent::ForwardCharacter()
 //Reverses Time for Actor
 int UTimeControlComponent::ReverseActor()
 {
-	if (!Mesh)
+	if (!Mesh || !b_IsPaused)
 		return 1;
 
 	if (FunctionDelay <= 0)
 	{
 		IteratorIndex -= 1;
-		//Returns if at the first Index
+		//Return if at 0
 		if (IteratorIndex < 0)
 		{
 			IteratorIndex = 0;
@@ -215,11 +215,11 @@ int UTimeControlComponent::ReverseActor()
 //Reverses Time for Character
 int UTimeControlComponent::ReverseCharacter()
 {
-	if (!CapsuleComp)
+	if (!CapsuleComp || !b_IsPaused)
 		return 1;
 
 	IteratorIndex -= 1;
-	//Returns if at the first Index
+	//Return if at 0
 	if (IteratorIndex < 0)
 	{
 		IteratorIndex = 0;
@@ -257,9 +257,10 @@ void UTimeControlComponent::NormalTimeActor()
 
 	//Removes the first index if the max amount is reached
 	if (TransformArray.Num() == MaxPositions && MaxPositions > 0)
+	{
 		TransformArray.RemoveAt(0, 1, true);
-	if (VelocityArray.Num() == MaxPositions && MaxPositions > 0)
 		VelocityArray.RemoveAt(0, 1, true);
+	}
 
 	//Adds the current transform into the [Transform Array]
 	TransformArray.Add(Mesh->GetComponentTransform());
