@@ -9,9 +9,6 @@ UTimeControlComponent::UTimeControlComponent()
 	// turn off to improve performance if you don't need it.
 	PrimaryComponentTick.bCanEverTick = true;
 
-	//ForwardTime would use the array and iterator to go forward into the array
-	//PauseTime would hold any object in place and stop adding positions in the array until input
-	//ReverseTime would use the array and iterator to go back in time
 }
 
 
@@ -30,6 +27,7 @@ void UTimeControlComponent::BeginPlay()
 		b_isCapsuleComp = true;
 
 	Timer = Delay;
+	FunctionDelay = Delay;
 }
 
 
@@ -39,15 +37,13 @@ void UTimeControlComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	Timer -= DeltaTime;
+	FunctionDelay -= DeltaTime;
 
 	//If the game is unpaused, remove everything from the iterator to the end of the array
 	if (b_IsDirty)
 	{
-		for (int i = IteratorIndex; i < TransformArray.Num(); i++)
-		{
-			TransformArray.RemoveAt(i, 1, true);
-			VelocityArray.RemoveAt(i, 1, true);
-		}
+		TransformArray.RemoveAt(IteratorIndex, TransformArray.Num() - IteratorIndex, true);
+		VelocityArray.RemoveAt(IteratorIndex, VelocityArray.Num() - IteratorIndex, true);
 
 		IteratorIndex = 0;
 		b_IterSet = false;
@@ -186,27 +182,32 @@ int UTimeControlComponent::ReverseActor()
 	if (!Mesh)
 		return 1;
 
-	IteratorIndex -= 1;
-	//Returns if at the first Index
-	if (IteratorIndex < 0)
+	if (FunctionDelay <= 0)
 	{
-		IteratorIndex = 0;
-		return 2;
+		IteratorIndex -= 1;
+		//Returns if at the first Index
+		if (IteratorIndex < 0)
+		{
+			IteratorIndex = 0;
+			return 2;
+		}
+
+		FTransform Transform = TransformArray[IteratorIndex];
+
+		//Set the Meshs [Transform] and [Linear Velocity]
+		Mesh->SetWorldTransform(Transform);
+		Mesh->SetPhysicsLinearVelocity(Transform.GetLocation());
+
+		//Sets a [Transform] to the [Velocity] at the index
+		FTransform Velocity = VelocityArray[IteratorIndex];
+		PhysicsVelocity = Velocity;
+		b_RecentChange = true;
+
+		Mesh->SetPhysicsLinearVelocity(Velocity.GetLocation());
+		Mesh->SetPhysicsAngularVelocity(Velocity.GetScale3D());
+
+		FunctionDelay = Delay;
 	}
-
-	FTransform Transform = TransformArray[IteratorIndex];
-
-	//Set the Meshs [Transform] and [Linear Velocity]
-	Mesh->SetWorldTransform(Transform);
-	Mesh->SetPhysicsLinearVelocity(Transform.GetLocation());
-
-	//Sets a [Transform] to the [Velocity] at the index
-	FTransform Velocity = VelocityArray[IteratorIndex];
-	PhysicsVelocity = Velocity;
-	b_RecentChange = true;
-
-	Mesh->SetPhysicsLinearVelocity(Velocity.GetLocation());
-	Mesh->SetPhysicsAngularVelocity(Velocity.GetScale3D());
 
 	return 0;
 }

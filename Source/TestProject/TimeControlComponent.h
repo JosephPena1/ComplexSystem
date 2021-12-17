@@ -74,4 +74,6 @@ private:
 
 	bool b_RecentChange = false;
 	FTransform PhysicsVelocity;
+
+	float FunctionDelay = 0.0f;
 };
