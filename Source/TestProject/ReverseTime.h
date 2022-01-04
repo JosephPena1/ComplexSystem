@@ -10,6 +10,12 @@
 
 #include "ReverseTime.generated.h"
 
+struct TKeyframe
+{
+	FTransform Velocity;
+	FVector Position;
+	float Time;
+};
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class TESTPROJECT_API UReverseTime : public UActorComponent
@@ -26,13 +32,19 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	UFUNCTION(BlueprintCallable)
+	int ReverseActor();
+	UFUNCTION(BlueprintCallable)
+	int ReverseCharacter();
+
 	//Toggles b_isReversing
 	UFUNCTION(BlueprintCallable)
 	void ToggleReverse();
 
 private:
-	int ReverseActor();
-	int ReverseCharacter();
+	//Updates the transform and velocity array
+	int UpdateArrayActor(float DeltaTime);
+	int UpdateArrayCharacter(float DeltaTime);
 
 public:
 	UPROPERTY(BlueprintReadWrite)
@@ -47,8 +59,12 @@ public:
 	int MaxPositions = 0;
 
 private:
+	TArray<TKeyframe> KeyframeArray; //???
+
 	TArray<FTransform> TransformArray;
 	TArray<FTransform> VelocityArray;
+
+	TKeyframe PreviousKeyframe;
 
 	AActor* Actor = nullptr;
 	ACharacter* Character = nullptr;
