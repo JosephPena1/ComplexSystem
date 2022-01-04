@@ -21,10 +21,6 @@ void UReverseTime::BeginPlay()
 	Mesh = Actor->FindComponentByClass<UStaticMeshComponent>();
 	CapsuleComp = Actor->FindComponentByClass<UCapsuleComponent>();
 
-	//Checks if a skeleton mesh is being used
-	if (CapsuleComp)
-		b_isCapsuleComp = true;
-
 	Timer = Delay;
 }
 
@@ -50,41 +46,36 @@ int UReverseTime::ReverseActor()
 	b_isReversing = true;
 
 	//Gets the last index in the Transform array
-	int TransformIndex = TransformArray.Num() - 1;
+	int KeyframeIndex = KeyframeArray.Num() - 1;
 	//Checks if the index is 0
-	if (TransformIndex <= 0)
+	if (KeyframeIndex <= 0)
 	{
-		FTransform Transform = TransformArray[TransformIndex];
-		Mesh->SetWorldTransform(Transform);
+		TKeyframe Keyframe = KeyframeArray[KeyframeIndex];
+		Mesh->SetWorldLocation(Keyframe.Position);
+		Mesh->SetWorldRotation(Keyframe.Rotation);
 		//Reduces jittering
 		Mesh->SetPhysicsLinearVelocity({0, 0, 0});
 		Mesh->SetPhysicsAngularVelocity({0, 0, 0});
 		return 0;
 	}
 
-	FTransform Transform = TransformArray[TransformIndex];
+	TKeyframe Keyframe = KeyframeArray[KeyframeIndex];
 
-	//Set the Meshs [Transform] and [Linear Velocity]
-	Mesh->SetWorldTransform(Transform);
-	Mesh->SetPhysicsLinearVelocity(Transform.GetLocation());
+	//Update Mesh position and velocity
+	Keyframe.Position = FMath::Lerp(PreviousKeyframe.Position, Keyframe.Position, 0.5f);
+	Mesh->SetWorldLocation(Keyframe.Position);
+	Mesh->SetWorldRotation(Keyframe.Rotation);
 
-	//If the index is not at 0, Remove the last index in the array
-	if (TransformIndex > 0)
-		TransformArray.RemoveAt(TransformIndex);
-
-	//Gets the last index in the Velocity array
-	int VelocityIndex = VelocityArray.Num() - 1;
-	//Sets a [Transform] to the [Velocity] at the index
-	FTransform Velocity = VelocityArray[VelocityIndex];
-	PhysicsVelocity = Velocity;
+	Mesh->SetPhysicsLinearVelocity(Keyframe.Position);
 	b_RecentChange = true;
 
-	Mesh->SetPhysicsLinearVelocity(Velocity.GetLocation());
-	Mesh->SetPhysicsAngularVelocity(Velocity.GetScale3D());
+	Mesh->SetPhysicsLinearVelocity(Keyframe.Velocity.GetLocation());
+	Mesh->SetPhysicsAngularVelocity(Keyframe.Velocity.GetScale3D());
 
+	PreviousKeyframe = Keyframe;
 	//If the index is not at 0, Remove the last index in the array
-	if (VelocityIndex > 0)
-		VelocityArray.RemoveAt(VelocityIndex);
+	if (KeyframeIndex > 0)
+		KeyframeArray.RemoveAt(KeyframeIndex);
 
 	return 0;
 }
@@ -96,30 +87,37 @@ int UReverseTime::ReverseCharacter()
 
 	b_isReversing = true;
 
-	//Gets the last index in the Transform array 
-	int TransformIndex = TransformArray.Num() - 1;
+	//Gets the last index in the Transform array
+	int KeyframeIndex = KeyframeArray.Num() - 1;
+	//Checks if the index is 0
+	if (KeyframeIndex <= 0)
+	{
+		TKeyframe Keyframe = KeyframeArray[KeyframeIndex];
+		CapsuleComp->SetWorldLocation(Keyframe.Position);
+		CapsuleComp->SetWorldRotation(Keyframe.Rotation);
+		//Reduces jittering
+		CapsuleComp->SetPhysicsLinearVelocity({ 0, 0, 0 });
+		CapsuleComp->SetPhysicsAngularVelocity({ 0, 0, 0 });
+		return 0;
+	}
 
-	FTransform Transform = TransformArray[TransformIndex];
+	TKeyframe Keyframe = KeyframeArray[KeyframeIndex];
 
-	//Set the Meshs [Transform] and [Linear Velocity]
-	CapsuleComp->SetWorldTransform(Transform);
-	CapsuleComp->SetPhysicsLinearVelocity(Transform.GetLocation());
+	//Update Mesh position and velocity
+	Keyframe.Position = FMath::Lerp(PreviousKeyframe.Position, Keyframe.Position, 0.5f);
+	CapsuleComp->SetWorldLocation(Keyframe.Position);
+	CapsuleComp->SetWorldRotation(Keyframe.Rotation);
 
+	CapsuleComp->SetPhysicsLinearVelocity(Keyframe.Position);
+	b_RecentChange = true;
+
+	CapsuleComp->SetPhysicsLinearVelocity(Keyframe.Velocity.GetLocation());
+	CapsuleComp->SetPhysicsAngularVelocity(Keyframe.Velocity.GetScale3D());
+
+	PreviousKeyframe = Keyframe;
 	//If the index is not at 0, Remove the last index in the array
-	if (TransformIndex > 0)
-		TransformArray.RemoveAt(TransformIndex);
-
-	//Gets the last index in the Velocity array
-	int VelocityIndex = VelocityArray.Num() - 1;
-	//Sets a [Transform] to the [Velocity] at the index
-	FTransform Velocity = VelocityArray[VelocityIndex];
-
-	CapsuleComp->SetPhysicsLinearVelocity(Velocity.GetLocation());
-	CapsuleComp->SetPhysicsAngularVelocity(Velocity.GetScale3D());
-
-	//If the index is not at 0, Remove the last index in the array
-	if (VelocityIndex > 0)
-		VelocityArray.RemoveAt(VelocityIndex);
+	if (KeyframeIndex > 0)
+		KeyframeArray.RemoveAt(KeyframeIndex);
 
 	return 0;
 }
@@ -131,43 +129,34 @@ void UReverseTime::ToggleReverse()
 }
 
 int UReverseTime::UpdateArrayActor(float DeltaTime)
-{
-	TKeyframe keyframe;
-	keyframe.Velocity.SetLocation(Mesh->GetPhysicsLinearVelocity());
-	keyframe.Velocity.SetScale3D(Mesh->GetPhysicsAngularVelocity());
-	keyframe.Velocity.SetRotation({0.0f, 0.0f, 0.0f, 0.0f});
-	keyframe.Position = Actor->GetActorLocation();
-	keyframe.Time = PreviousKeyframe.Time - DeltaTime;
-
+{	
 	if (!Mesh)
 		return 1;
 
-	//If not reversing add current [Transform] and [Velocity] into array
 	else if (Timer <= 0)
 	{
 		//Continues velocity after exiting reverse mode
 		if (b_RecentChange)
 		{
-			Mesh->SetPhysicsLinearVelocity(PhysicsVelocity.GetLocation());
-			Mesh->SetPhysicsAngularVelocity(PhysicsVelocity.GetScale3D());
+			Mesh->SetPhysicsLinearVelocity(PreviousKeyframe.Velocity.GetLocation());
+			Mesh->SetPhysicsAngularVelocity(PreviousKeyframe.Velocity.GetScale3D());
 			b_RecentChange = false;
 		}
+
 		//Removes the first index if the max amount is reached
-		if (TransformArray.Num() == MaxPositions && MaxPositions > 0)
-			TransformArray.RemoveAt(0, 1, true);
-		if (VelocityArray.Num() == MaxPositions && MaxPositions > 0)
-			VelocityArray.RemoveAt(0, 1, true);
+		if (KeyframeArray.Num() == MaxPositions && MaxPositions > 0)
+			KeyframeArray.RemoveAt(0, 1, true);
 
-		//Adds the current transform into the [Transform Array]
-		TransformArray.Add(Mesh->GetComponentTransform());
+		//Add info to Keyframe array
+		TKeyframe keyframe;
+		keyframe.Velocity.SetLocation(Mesh->GetPhysicsLinearVelocity());
+		keyframe.Velocity.SetScale3D(Mesh->GetPhysicsAngularVelocity());
+		keyframe.Velocity.SetRotation({0.0f, 0.0f, 0.0f, 0.0f});
+		keyframe.Position = Actor->GetActorLocation();
+		keyframe.Rotation = Actor->GetTransform().GetRotation();
+		PreviousKeyframe = keyframe;
 
-		//Adds the current velocity into the [Velocity Array]
-		FTransform NewVelocity;
-		NewVelocity.SetLocation(Mesh->GetPhysicsLinearVelocity());
-		NewVelocity.SetScale3D(Mesh->GetPhysicsAngularVelocity());
-		NewVelocity.SetRotation(FQuat(0.0f, 0.0f, 0.0f, 0.0f));
-
-		VelocityArray.Add(NewVelocity);
+		KeyframeArray.Add(keyframe);
 		Timer = Delay;
 	}
 	return 0;
@@ -181,22 +170,28 @@ int UReverseTime::UpdateArrayCharacter(float DeltaTime)
 	//If not reversing add current [Transform] and [Velocity] into array
 	else if (Timer <= 0)
 	{
+		//Continues velocity after exiting reverse mode
+		if (b_RecentChange)
+		{
+			Mesh->SetPhysicsLinearVelocity(PreviousKeyframe.Velocity.GetLocation());
+			Mesh->SetPhysicsAngularVelocity(PreviousKeyframe.Velocity.GetScale3D());
+			b_RecentChange = false;
+		}
+
 		//Removes the first index if the max amount is reached
-		if (TransformArray.Num() == MaxPositions && MaxPositions > 0)
-			TransformArray.RemoveAt(0, 1, true);
-		if (VelocityArray.Num() == MaxPositions && MaxPositions > 0)
-			VelocityArray.RemoveAt(0, 1, true);
+		if (KeyframeArray.Num() == MaxPositions && MaxPositions > 0)
+			KeyframeArray.RemoveAt(0, 1, true);
 
-		//Adds the current transform into the [Transform Array]
-		TransformArray.Add(CapsuleComp->GetComponentTransform());
+		//Add info to Keyframe array
+		TKeyframe keyframe;
+		keyframe.Velocity.SetLocation(CapsuleComp->GetPhysicsLinearVelocity());
+		keyframe.Velocity.SetScale3D(CapsuleComp->GetPhysicsAngularVelocity());
+		keyframe.Velocity.SetRotation({ 0.0f, 0.0f, 0.0f, 0.0f });
+		keyframe.Position = Actor->GetActorLocation();
+		keyframe.Rotation = Actor->GetTransform().GetRotation();
+		PreviousKeyframe = keyframe;
 
-		//Adds the current velocity into the [Velocity Array]
-		FTransform NewVelocity;
-		NewVelocity.SetLocation(CapsuleComp->GetPhysicsLinearVelocity());
-		NewVelocity.SetScale3D(CapsuleComp->GetPhysicsAngularVelocity());
-		NewVelocity.SetRotation(FQuat(0.0f, 0.0f, 0.0f, 0.0f));
-
-		VelocityArray.Add(NewVelocity);
+		KeyframeArray.Add(keyframe);
 		Timer = Delay;
 	}
 	return 0;

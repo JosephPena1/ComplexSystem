@@ -14,7 +14,7 @@ struct TKeyframe
 {
 	FTransform Velocity;
 	FVector Position;
-	float Time;
+	FQuat Rotation;
 };
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
@@ -59,11 +59,7 @@ public:
 	int MaxPositions = 0;
 
 private:
-	TArray<TKeyframe> KeyframeArray; //???
-
-	TArray<FTransform> TransformArray;
-	TArray<FTransform> VelocityArray;
-
+	TArray<TKeyframe> KeyframeArray;
 	TKeyframe PreviousKeyframe;
 
 	AActor* Actor = nullptr;
@@ -71,9 +67,6 @@ private:
 	UStaticMeshComponent* Mesh = nullptr;
 	UCapsuleComponent* CapsuleComp = nullptr;
 
-	bool b_isCapsuleComp = false;
 	float Timer = 0.0f;
-
 	bool b_RecentChange = false;
-	FTransform PhysicsVelocity;
 };
