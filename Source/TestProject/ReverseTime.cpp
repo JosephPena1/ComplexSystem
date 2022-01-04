@@ -62,7 +62,7 @@ int UReverseTime::ReverseActor()
 	TKeyframe Keyframe = KeyframeArray[KeyframeIndex];
 
 	//Update Mesh position and velocity
-	Keyframe.Position = FMath::Lerp(PreviousKeyframe.Position, Keyframe.Position, 0.5f);
+	//Keyframe.Position = FMath::Lerp(PreviousKeyframe.Position, Keyframe.Position, 0.5f);
 	Mesh->SetWorldLocation(Keyframe.Position);
 	Mesh->SetWorldRotation(Keyframe.Rotation);
 
@@ -84,7 +84,7 @@ int UReverseTime::ReverseCharacter()
 {
 	if (!CapsuleComp)
 		return 1;
-
+	 
 	b_isReversing = true;
 
 	//Gets the last index in the Transform array
@@ -104,7 +104,7 @@ int UReverseTime::ReverseCharacter()
 	TKeyframe Keyframe = KeyframeArray[KeyframeIndex];
 
 	//Update Mesh position and velocity
-	Keyframe.Position = FMath::Lerp(PreviousKeyframe.Position, Keyframe.Position, 0.5f);
+	//Keyframe.Position = FMath::Lerp(PreviousKeyframe.Position, Keyframe.Position, 0.5f);
 	CapsuleComp->SetWorldLocation(Keyframe.Position);
 	CapsuleComp->SetWorldRotation(Keyframe.Rotation);
 
@@ -149,9 +149,8 @@ int UReverseTime::UpdateArrayActor(float DeltaTime)
 
 		//Add info to Keyframe array
 		TKeyframe keyframe;
+		keyframe.Velocity = { {0.0f, 0.0f, 0.0f, 0.0f}, Mesh->GetPhysicsAngularVelocity(), {0,0,0} };
 		keyframe.Velocity.SetLocation(Mesh->GetPhysicsLinearVelocity());
-		keyframe.Velocity.SetScale3D(Mesh->GetPhysicsAngularVelocity());
-		keyframe.Velocity.SetRotation({0.0f, 0.0f, 0.0f, 0.0f});
 		keyframe.Position = Actor->GetActorLocation();
 		keyframe.Rotation = Actor->GetTransform().GetRotation();
 		PreviousKeyframe = keyframe;
@@ -184,9 +183,8 @@ int UReverseTime::UpdateArrayCharacter(float DeltaTime)
 
 		//Add info to Keyframe array
 		TKeyframe keyframe;
+		keyframe.Velocity = { {0.0f, 0.0f, 0.0f, 0.0f}, CapsuleComp->GetPhysicsAngularVelocity(), {0,0,0} };
 		keyframe.Velocity.SetLocation(CapsuleComp->GetPhysicsLinearVelocity());
-		keyframe.Velocity.SetScale3D(CapsuleComp->GetPhysicsAngularVelocity());
-		keyframe.Velocity.SetRotation({ 0.0f, 0.0f, 0.0f, 0.0f });
 		keyframe.Position = Actor->GetActorLocation();
 		keyframe.Rotation = Actor->GetTransform().GetRotation();
 		PreviousKeyframe = keyframe;

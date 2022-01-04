@@ -19,19 +19,9 @@ public:
 	// Sets default values for this character's properties
 	ACppCharacter();
 
-	USkeletalMeshComponent* skele;
-
-private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	USpringArmComponent* SpringArm;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	UCameraComponent* Camera;
-
-protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -43,11 +33,24 @@ public:
 
 	void ToggleTime();
 
+private:
+	void VerticalRot(float Value);
+
 public:
+	USkeletalMeshComponent* skele;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bIsReversing = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Sensitivity = 1.0f;
 
 private:
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+		USpringArmComponent* SpringArm;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+		UCameraComponent* Camera;
+
 	AActor* actor = nullptr;
 
 	bool bIsMovingX = false;
