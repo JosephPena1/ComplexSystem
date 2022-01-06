@@ -33,7 +33,8 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable)
-	int ReverseActor();
+	//Reverses an Actor with this component (If using MinDistance give CapsuleComponent)
+	int ReverseActor(UCapsuleComponent* CapsuleComponent = nullptr);
 	UFUNCTION(BlueprintCallable)
 	int ReverseCharacter();
 
@@ -55,8 +56,12 @@ public:
 	float Delay = 0.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//Max array size, set to 0 for no limit
+	//Max positions stored in array, set to 0 for no limit
 	int MaxPositions = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//Min distance to rewind the object, set to 0 to ignore distance
+	float MinDistance = 0;
 
 private:
 	TArray<TKeyframe> KeyframeArray;
@@ -69,4 +74,6 @@ private:
 
 	float Timer = 0.0f;
 	bool b_RecentChange = false;
+
+	float DebugFloat;
 };

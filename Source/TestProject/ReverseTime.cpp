@@ -8,7 +8,6 @@ UReverseTime::UReverseTime()
 {
 	// turn off to improve performance if you don't need it.
 	PrimaryComponentTick.bCanEverTick = true;
-
 }
 
 // Called when the game starts
@@ -35,48 +34,51 @@ void UReverseTime::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
 		UpdateArrayActor(DeltaTime);
 	else
 		b_isReversing = false;
-
 }
 
-int UReverseTime::ReverseActor()
+int UReverseTime::ReverseActor(UCapsuleComponent* CapsuleComponent)
 {
 	if (!Mesh)
 		return 1;
 
-	b_isReversing = true;
-
-	//Gets the last index in the Transform array
-	int KeyframeIndex = KeyframeArray.Num() - 1;
-	//Checks if the index is 0
-	if (KeyframeIndex <= 0)
+	float distance = FVector::Distance(CapsuleComponent->GetComponentLocation(), Actor->GetActorLocation());
+	if (MinDistance == 0 || distance < MinDistance)
 	{
+		b_isReversing = true;
+
+		//Gets the last index in the Transform array
+		int KeyframeIndex = KeyframeArray.Num() - 1;
+		//Checks if the index is 0
+		if (KeyframeIndex <= 0)
+		{
+			TKeyframe Keyframe = KeyframeArray[KeyframeIndex];
+			Mesh->SetWorldLocation(Keyframe.Position);
+			Mesh->SetWorldRotation(Keyframe.Rotation);
+			//Reduces jittering
+			Mesh->SetPhysicsLinearVelocity({ 0, 0, 0 });
+			Mesh->SetPhysicsAngularVelocity({ 0, 0, 0 });
+			return 0;
+		}
+
 		TKeyframe Keyframe = KeyframeArray[KeyframeIndex];
+
+		//Update Mesh position and velocity
+		Keyframe.Position = FMath::Lerp(PreviousKeyframe.Position, Keyframe.Position, 0.5f);
 		Mesh->SetWorldLocation(Keyframe.Position);
 		Mesh->SetWorldRotation(Keyframe.Rotation);
-		//Reduces jittering
-		Mesh->SetPhysicsLinearVelocity({0, 0, 0});
-		Mesh->SetPhysicsAngularVelocity({0, 0, 0});
-		return 0;
+
+		Mesh->SetPhysicsLinearVelocity(Keyframe.Position);
+		b_RecentChange = true;
+
+		Mesh->SetPhysicsLinearVelocity(Keyframe.Velocity.GetLocation());
+		Mesh->SetPhysicsAngularVelocity(Keyframe.Velocity.GetScale3D());
+
+		PreviousKeyframe = Keyframe;
+		//If the index is not at 0, Remove the last index in the array
+		if (KeyframeIndex > 0)
+			KeyframeArray.RemoveAt(KeyframeIndex);
 	}
-
-	TKeyframe Keyframe = KeyframeArray[KeyframeIndex];
-
-	//Update Mesh position and velocity
-	//Keyframe.Position = FMath::Lerp(PreviousKeyframe.Position, Keyframe.Position, 0.5f);
-	Mesh->SetWorldLocation(Keyframe.Position);
-	Mesh->SetWorldRotation(Keyframe.Rotation);
-
-	Mesh->SetPhysicsLinearVelocity(Keyframe.Position);
-	b_RecentChange = true;
-
-	Mesh->SetPhysicsLinearVelocity(Keyframe.Velocity.GetLocation());
-	Mesh->SetPhysicsAngularVelocity(Keyframe.Velocity.GetScale3D());
-
-	PreviousKeyframe = Keyframe;
-	//If the index is not at 0, Remove the last index in the array
-	if (KeyframeIndex > 0)
-		KeyframeArray.RemoveAt(KeyframeIndex);
-
+	
 	return 0;
 }
 
@@ -104,7 +106,7 @@ int UReverseTime::ReverseCharacter()
 	TKeyframe Keyframe = KeyframeArray[KeyframeIndex];
 
 	//Update Mesh position and velocity
-	//Keyframe.Position = FMath::Lerp(PreviousKeyframe.Position, Keyframe.Position, 0.5f);
+	Keyframe.Position = FMath::Lerp(PreviousKeyframe.Position, Keyframe.Position, 0.5f);
 	CapsuleComp->SetWorldLocation(Keyframe.Position);
 	CapsuleComp->SetWorldRotation(Keyframe.Rotation);
 
