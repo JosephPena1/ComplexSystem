@@ -7,7 +7,8 @@
 UFadeOut::UFadeOut()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-
+	TriggerVol->OnActorBeginOverlap.AddDynamic(this, &UFadeOut::OnOverlapEnter);
+	TriggerVol->OnActorBeginOverlap.AddDynamic(this, &UFadeOut::OnOverlapEnd);
 }
 
 
@@ -24,5 +25,28 @@ void UFadeOut::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	if (b_IsFading)
+		FadeTimer -= DeltaTime;
+
+	if (FadeTimer <= 0)
+	{
+		//disable collision
+		ReappearTimer = 3.0f;
+	}
+
 }
 
+void UFadeOut::OnOverlapEnter(AActor* OverlappedActor, AActor* Other)
+{
+	if (Other && (Other != TriggerVol))
+		if (!b_IsFading)
+		{
+			FadeTimer = 3.0f;
+			b_IsFading = true;
+		}
+}
+
+void UFadeOut::OnOverlapEnd(AActor* OverlappedActor, AActor* Other)
+{
+
+}

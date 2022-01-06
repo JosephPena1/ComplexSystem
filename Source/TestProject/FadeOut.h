@@ -24,6 +24,15 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
-	ATriggerVolume trigger;
-	float Timer = 0.0f;
+	UFUNCTION()
+	void OnOverlapEnter(AActor* OverlappedActor, AActor* Other);
+	UFUNCTION()
+	void OnOverlapEnd(AActor* OverlappedActor, AActor* Other);
+
+private:
+	ATriggerVolume* TriggerVol;
+
+	float ReappearTimer = 0.0f;
+	float FadeTimer = 0.0f;
+	bool b_IsFading = false;
 };
