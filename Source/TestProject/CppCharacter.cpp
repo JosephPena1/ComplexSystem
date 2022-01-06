@@ -14,7 +14,6 @@ ACppCharacter::ACppCharacter()
 
 	SpringArm->SetRelativeLocationAndRotation(FVector( 0.0f, 0.0f, 90.0f), FRotator( -10.0f, 0.0f, 0.0f));
 
-
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm);
 }
@@ -32,7 +31,6 @@ void ACppCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-
 }
 
 // Called to bind functionality to input
@@ -45,8 +43,8 @@ void ACppCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	InputComponent->BindAxis("Right", this, &ACppCharacter::Right);
 
 	//Reads camera movement
-	InputComponent->BindAxis("LookUp", this, &ACppCharacter::AddControllerYawInput);
-	InputComponent->BindAxis("LookRight", this, &ACppCharacter::AddControllerPitchInput);
+	InputComponent->BindAxis("LookUp", this, &ACppCharacter::VerticalRot);
+	InputComponent->BindAxis("LookRight", this, &ACppCharacter::AddControllerYawInput);
 
 	InputComponent->BindAction("ToggleTimeStop", IE_Pressed, this, &ACppCharacter::ToggleTime);
 }
@@ -74,4 +72,14 @@ void ACppCharacter::Right(float AxisValue)
 void ACppCharacter::ToggleTime()
 {
 	bIsReversing = !bIsReversing;
+}
+
+void ACppCharacter::VerticalRot(float Value)
+{
+	if (Value)
+	{
+		float temp = SpringArm->GetRelativeRotation().Pitch + (Value * Sensitivity);
+		if (temp < 40 && temp > -65)
+			SpringArm->AddLocalRotation(FRotator(Value, 0, 0));
+	}
 }
