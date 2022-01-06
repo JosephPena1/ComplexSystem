@@ -20,7 +20,6 @@ void UReverseTime::BeginPlay()
 	Mesh = Actor->FindComponentByClass<UStaticMeshComponent>();
 	CapsuleComp = Actor->FindComponentByClass<UCapsuleComponent>();
 
-	Timer = Delay;
 }
 
 // Called every frame
@@ -41,10 +40,16 @@ int UReverseTime::ReverseActor(UCapsuleComponent* CapsuleComponent)
 	if (!Mesh)
 		return 1;
 
-	float distance = FVector::Distance(CapsuleComponent->GetComponentLocation(), Actor->GetActorLocation());
+	float distance = 0.0f;
+	if (CapsuleComponent && MinDistance != 0)
+		distance = FVector::Distance(CapsuleComponent->GetComponentLocation(), Actor->GetActorLocation());
+
 	if (MinDistance == 0 || distance < MinDistance)
 	{
 		b_isReversing = true;
+
+		Mesh->SetSimulatePhysics(false);
+		b_IsPhysicsActive = false;
 
 		//Gets the last index in the Transform array
 		int KeyframeIndex = KeyframeArray.Num() - 1;
@@ -132,6 +137,12 @@ void UReverseTime::ToggleReverse()
 
 int UReverseTime::UpdateArrayActor(float DeltaTime)
 {	
+	if (!b_IsPhysicsActive)
+	{
+		Mesh->SetSimulatePhysics(true);
+		b_IsPhysicsActive = true;
+	}
+
 	if (!Mesh)
 		return 1;
 

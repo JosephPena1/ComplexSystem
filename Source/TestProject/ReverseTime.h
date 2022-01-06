@@ -48,7 +48,7 @@ private:
 	int UpdateArrayCharacter(float DeltaTime);
 
 public:
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadOnly)
 	bool b_isReversing = false;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -74,6 +74,5 @@ private:
 
 	float Timer = 0.0f;
 	bool b_RecentChange = false;
-
-	float DebugFloat;
+	bool b_IsPhysicsActive = true;
 };

@@ -47,6 +47,7 @@ void ACppCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	InputComponent->BindAxis("LookRight", this, &ACppCharacter::AddControllerYawInput);
 
 	InputComponent->BindAction("ToggleTimeStop", IE_Pressed, this, &ACppCharacter::ToggleTime);
+	InputComponent->BindAction("Jump", IE_Pressed, this, &ACppCharacter::Jump);
 }
 
 void ACppCharacter::Forward(float AxisValue)
