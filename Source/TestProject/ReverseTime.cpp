@@ -19,6 +19,7 @@ void UReverseTime::BeginPlay()
 	Character = (ACharacter*)UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
 	Mesh = Actor->FindComponentByClass<UStaticMeshComponent>();
 	CapsuleComp = Actor->FindComponentByClass<UCapsuleComponent>();
+	b_OriginalPhysicsSim = Mesh->IsSimulatingPhysics();
 
 }
 
@@ -139,8 +140,8 @@ int UReverseTime::UpdateArrayActor(float DeltaTime)
 {	
 	if (!b_IsPhysicsActive)
 	{
-		Mesh->SetSimulatePhysics(true);
-		b_IsPhysicsActive = true;
+		Mesh->SetSimulatePhysics(b_OriginalPhysicsSim);
+		b_IsPhysicsActive = b_OriginalPhysicsSim;
 	}
 
 	if (!Mesh)

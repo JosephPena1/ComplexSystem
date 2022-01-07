@@ -7,8 +7,6 @@
 UFadeOut::UFadeOut()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	TriggerVol->OnActorBeginOverlap.AddDynamic(this, &UFadeOut::OnOverlapEnter);
-	TriggerVol->OnActorBeginOverlap.AddDynamic(this, &UFadeOut::OnOverlapEnd);
 }
 
 
@@ -17,6 +15,7 @@ void UFadeOut::BeginPlay()
 {
 	Super::BeginPlay();
 
+	Actor = GetOwner();
 }
 
 
@@ -25,28 +24,49 @@ void UFadeOut::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (b_IsFading)
-		FadeTimer -= DeltaTime;
+	if (b_IsEntered)
+		FallTimerDelay -= DeltaTime;
 
-	if (FadeTimer <= 0)
+	if (b_IsFalling)
+		MaxFallTime -= DeltaTime;
+
+	if (FallTimerDelay <= 0 && !b_IsFalling)
 	{
-		//disable collision
-		ReappearTimer = 3.0f;
+		b_IsFalling = true;
+		b_IsEntered = false;
+		MaxFallTime = 2.0f;
 	}
+
+	if (MaxFallTime > 0 && b_IsFalling)
+	{
+		FVector FallLocation = Actor->GetActorLocation();
+		Actor->SetActorLocation({ FallLocation.X, FallLocation.Y, FallLocation.Z - 1 });
+	}
+
+	if (MaxFallTime <= 0)
+		Reset();
 
 }
 
 void UFadeOut::OnOverlapEnter(AActor* OverlappedActor, AActor* Other)
 {
-	if (Other && (Other != TriggerVol))
-		if (!b_IsFading)
+	if (Other && (Other != Actor))
+		if (!b_IsFalling && !b_IsEntered)
 		{
-			FadeTimer = 3.0f;
-			b_IsFading = true;
+			FallTimerDelay = 2.0f;
+			b_IsEntered = true;
 		}
 }
 
 void UFadeOut::OnOverlapEnd(AActor* OverlappedActor, AActor* Other)
 {
 
+}
+
+void UFadeOut::Reset()
+{
+	FallTimerDelay = 2.0f;
+	MaxFallTime = 2.0f;
+	b_IsFalling = false;
+	b_IsEntered = false;
 }

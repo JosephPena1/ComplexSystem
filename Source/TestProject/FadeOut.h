@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Engine/TriggerVolume.h"
 
 #include "FadeOut.generated.h"
 
@@ -24,15 +23,20 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void OnOverlapEnter(AActor* OverlappedActor, AActor* Other);
 	UFUNCTION()
 	void OnOverlapEnd(AActor* OverlappedActor, AActor* Other);
 
-private:
-	ATriggerVolume* TriggerVol;
+	UFUNCTION()
+	void Reset();
 
-	float ReappearTimer = 0.0f;
-	float FadeTimer = 0.0f;
-	bool b_IsFading = false;
+private:
+	AActor* Actor = nullptr;
+
+	float FallTimerDelay = 2.0f;
+	float MaxFallTime = 2.0f;
+	bool b_IsFalling = false;
+	bool b_IsEntered = false;
+
 };

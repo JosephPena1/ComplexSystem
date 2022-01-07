@@ -75,4 +75,5 @@ private:
 	float Timer = 0.0f;
 	bool b_RecentChange = false;
 	bool b_IsPhysicsActive = true;
+	bool b_OriginalPhysicsSim = false;
 };

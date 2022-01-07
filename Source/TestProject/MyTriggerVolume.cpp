@@ -16,7 +16,7 @@ void AMyTriggerVolume::BeginPlay()
 
 void AMyTriggerVolume::OnOverlapBegin(AActor* OverlappedActor, AActor* Other)
 {
-	if (Other && (Other != this))
+	if (Other && (Other != this) && !(Other->ActorHasTag("Platform")))
 	{
 		Other->SetActorLocation({2340,1550,-130});
 	}
