@@ -24,4 +24,8 @@ private:
 	UFUNCTION()
 	//Overlap End Function
 	void OnOverlapEnd(AActor* OverlappedActor, AActor* Other);
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector TeleportPosition;
 };
