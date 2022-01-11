@@ -45,5 +45,4 @@ private:
 	float MaxFallTime = 2.0f;
 	bool b_IsFalling = false;
 	bool b_IsEntered = false;
-
 };
