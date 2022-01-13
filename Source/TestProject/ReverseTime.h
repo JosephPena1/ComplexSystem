@@ -32,22 +32,25 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable)
-	//Reverses an Actor with this component
+	//Reverses the component owner if they have a StaticMeshComponent
 	int ReverseActor();
 	UFUNCTION(BlueprintCallable)
+	//Reverses the component owner if they have a CapsuleComponent
 	int ReverseCharacter();
 
 	UFUNCTION()
+	//Called when the component is colliding with an actor
 	void OnOverlapBegin(UPrimitiveComponent* OverlapComponent, AActor* OtherActor,
 			UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
 			bool bFromSweep, const FHitResult& SweepResult);
 
 	UFUNCTION()
+	//Called when the component is no longer colliding with an actor
 	void OnOverlapEnd(UPrimitiveComponent* OverlapComponent, AActor* OtherActor,
 			UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 private:
-	//Updates the transform and velocity array
+	//Updates the Keyframe array with the owner's current info
 	int UpdateArrayActor();
 	int UpdateArrayCharacter();
 
