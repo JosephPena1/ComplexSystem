@@ -74,6 +74,9 @@ public:
 	//The radius of the sphere collider, no affect if UsingDistance is false 
 	float MaxRadius = 1.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool b_IsNear = false;
+
 private:
 	TArray<TKeyframe> KeyframeArray;
 	TKeyframe PreviousKeyframe;
@@ -87,5 +90,5 @@ private:
 	bool b_RecentChange = false;
 	bool b_IsPhysicsActive = true;
 	bool b_OriginalPhysicsSim = false;
-	bool b_IsNear = false;
+
 };

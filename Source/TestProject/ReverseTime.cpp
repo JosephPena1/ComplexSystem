@@ -151,7 +151,8 @@ void UReverseTime::OnOverlapBegin(UPrimitiveComponent* OverlapComponent, AActor*
 
 void UReverseTime::OnOverlapEnd(UPrimitiveComponent* OverlapComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	b_IsNear = false;
+	if (OtherActor && (OtherActor != Actor) && (OtherActor->ActorHasTag("Player")))
+		b_IsNear = false;
 }
 
 int UReverseTime::UpdateArrayActor()
