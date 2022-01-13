@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 
 #include "ReverseTime.generated.h"
 
@@ -31,10 +32,19 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable)
-	//Reverses an Actor with this component (If using MinDistance give CapsuleComponent)
-	int ReverseActor(UCapsuleComponent* CapsuleComponent = nullptr);
+	//Reverses an Actor with this component
+	int ReverseActor();
 	UFUNCTION(BlueprintCallable)
 	int ReverseCharacter();
+
+	UFUNCTION()
+	void OnOverlapBegin(UPrimitiveComponent* OverlapComponent, AActor* OtherActor,
+			UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+			bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnOverlapEnd(UPrimitiveComponent* OverlapComponent, AActor* OtherActor,
+			UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 private:
 	//Updates the transform and velocity array
@@ -54,8 +64,12 @@ public:
 	int MaxPositions = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//Minimum distance to reverse the object, set to 0 to ignore distance
-	float MinDistance = 0;
+	//Wether you want the object to reverse when you get close to it or not
+	bool b_UsingDistance = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//The radius of the sphere collider, no affect if UsingDistance is false 
+	float MaxRadius = 1.0f;
 
 private:
 	TArray<TKeyframe> KeyframeArray;
@@ -64,9 +78,11 @@ private:
 	AActor* Actor = nullptr;
 	UStaticMeshComponent* Mesh = nullptr;
 	UCapsuleComponent* CapsuleComp = nullptr;
-
+	USphereComponent* SphereCollider;
+	
 	float Timer = 0.0f;
 	bool b_RecentChange = false;
 	bool b_IsPhysicsActive = true;
 	bool b_OriginalPhysicsSim = false;
+	bool b_IsNear = false;
 };

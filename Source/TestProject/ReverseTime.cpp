@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "ReverseTime.h"
 
 // Sets default values for this component's properties
@@ -8,6 +7,8 @@ UReverseTime::UReverseTime()
 {
 	// turn off to improve performance if you don't need it.
 	PrimaryComponentTick.bCanEverTick = true;
+
+	SphereCollider = CreateDefaultSubobject<USphereComponent>("SphereCollider");
 }
 
 // Called when the game starts
@@ -16,6 +17,7 @@ void UReverseTime::BeginPlay()
 	Super::BeginPlay();
 
 	Actor = GetOwner();
+	
 	Mesh = Actor->FindComponentByClass<UStaticMeshComponent>();
 	CapsuleComp = Actor->FindComponentByClass<UCapsuleComponent>();
 
@@ -24,6 +26,14 @@ void UReverseTime::BeginPlay()
 
 	if (Mesh)
 		b_OriginalPhysicsSim = Mesh->IsSimulatingPhysics();
+
+	if (b_UsingDistance && Mesh)
+	{
+		SphereCollider->OnComponentBeginOverlap.AddDynamic(this, &UReverseTime::OnOverlapBegin);
+		SphereCollider->OnComponentEndOverlap.AddDynamic(this, &UReverseTime::OnOverlapEnd);
+		SphereCollider->AttachToComponent(Mesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		SphereCollider->SetSphereRadius(MaxRadius);
+	}
 }
 
 // Called every frame
@@ -47,18 +57,13 @@ void UReverseTime::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
 		b_isReversing = false;
 }
 
-int UReverseTime::ReverseActor(UCapsuleComponent* CapsuleComponent)
+int UReverseTime::ReverseActor()
 {
 	if (!Mesh)
 		return 1;
 
-	float distance = 0.0f;
-	//Check if there is a CapsuleComponent and if MinDistance is not 0
-	if (CapsuleComponent && MinDistance != 0)
-		distance = FVector::Distance(CapsuleComponent->GetComponentLocation(), Actor->GetActorLocation());
-
 	//Check if MinDistance is 0 or if distance is less than MinDistance
-	if (MinDistance == 0 || distance < MinDistance)
+	if (!b_UsingDistance || b_IsNear)
 	{
 		b_isReversing = true;
 
@@ -136,6 +141,17 @@ int UReverseTime::ReverseCharacter()
 		KeyframeArray.RemoveAt(KeyframeIndex);
 
 	return 0;
+}
+
+void UReverseTime::OnOverlapBegin(UPrimitiveComponent* OverlapComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor && (OtherActor != Actor) && (OtherActor->ActorHasTag("Player")))
+		b_IsNear = true;
+}
+
+void UReverseTime::OnOverlapEnd(UPrimitiveComponent* OverlapComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	b_IsNear = false;
 }
 
 int UReverseTime::UpdateArrayActor()
