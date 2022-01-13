@@ -16,11 +16,14 @@ void UReverseTime::BeginPlay()
 	Super::BeginPlay();
 
 	Actor = GetOwner();
-	Character = (ACharacter*)UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
 	Mesh = Actor->FindComponentByClass<UStaticMeshComponent>();
 	CapsuleComp = Actor->FindComponentByClass<UCapsuleComponent>();
-	b_OriginalPhysicsSim = Mesh->IsSimulatingPhysics();
 
+	if (!Mesh && !CapsuleComp)
+		UE_LOG(LogTemp, Warning, TEXT("No StaticMeshComponent or CapsuleComponent found"));
+
+	if (Mesh)
+		b_OriginalPhysicsSim = Mesh->IsSimulatingPhysics();
 }
 
 // Called every frame
@@ -30,9 +33,17 @@ void UReverseTime::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
 
 	Timer -= DeltaTime;
 
-	if (!b_isReversing)
-		UpdateArrayActor(DeltaTime);
-	else
+	//Check if owner has a Mesh and is not being reversed
+	if (Mesh && !b_isReversing)
+		UpdateArrayActor();
+
+	//Check if owner has a CapsuleComp and is not being reversed
+	if (CapsuleComp && !b_isReversing)
+		UpdateArrayActor();
+
+	//Set IsReversing back to false if a
+	//reverse function is not being called
+	if (b_isReversing)
 		b_isReversing = false;
 }
 
@@ -42,9 +53,11 @@ int UReverseTime::ReverseActor(UCapsuleComponent* CapsuleComponent)
 		return 1;
 
 	float distance = 0.0f;
+	//Check if there is a CapsuleComponent and if MinDistance is not 0
 	if (CapsuleComponent && MinDistance != 0)
 		distance = FVector::Distance(CapsuleComponent->GetComponentLocation(), Actor->GetActorLocation());
 
+	//Check if MinDistance is 0 or if distance is less than MinDistance
 	if (MinDistance == 0 || distance < MinDistance)
 	{
 		b_isReversing = true;
@@ -52,9 +65,9 @@ int UReverseTime::ReverseActor(UCapsuleComponent* CapsuleComponent)
 		Mesh->SetSimulatePhysics(false);
 		b_IsPhysicsActive = false;
 
-		//Gets the last index in the Transform array
+		//Get the last index in the Keyframe array
 		int KeyframeIndex = KeyframeArray.Num() - 1;
-		//Checks if the index is 0
+		//Check if the index is 0
 		if (KeyframeIndex <= 0)
 		{
 			TKeyframe Keyframe = KeyframeArray[KeyframeIndex];
@@ -68,19 +81,17 @@ int UReverseTime::ReverseActor(UCapsuleComponent* CapsuleComponent)
 
 		TKeyframe Keyframe = KeyframeArray[KeyframeIndex];
 
-		//Update Mesh position and velocity
+		//Update Mesh position, rotation and velocity
 		Keyframe.Position = FMath::Lerp(PreviousKeyframe.Position, Keyframe.Position, 0.5f);
 		Mesh->SetWorldLocation(Keyframe.Position);
 		Mesh->SetWorldRotation(Keyframe.Rotation);
 
-		Mesh->SetPhysicsLinearVelocity(Keyframe.Position);
-		b_RecentChange = true;
-
 		Mesh->SetPhysicsLinearVelocity(Keyframe.Velocity.GetLocation());
 		Mesh->SetPhysicsAngularVelocity(Keyframe.Velocity.GetScale3D());
+		b_RecentChange = true;
 
 		PreviousKeyframe = Keyframe;
-		//If the index is not at 0, Remove the last index in the array
+		//If the index is greater than 0, Remove the last keyframe in the array
 		if (KeyframeIndex > 0)
 			KeyframeArray.RemoveAt(KeyframeIndex);
 	}
@@ -95,9 +106,9 @@ int UReverseTime::ReverseCharacter()
 	 
 	b_isReversing = true;
 
-	//Gets the last index in the Transform array
+	//Gets the last index in the Keyframe array
 	int KeyframeIndex = KeyframeArray.Num() - 1;
-	//Checks if the index is 0
+	//Check if the index is 0
 	if (KeyframeIndex <= 0)
 	{
 		TKeyframe Keyframe = KeyframeArray[KeyframeIndex];
@@ -111,45 +122,36 @@ int UReverseTime::ReverseCharacter()
 
 	TKeyframe Keyframe = KeyframeArray[KeyframeIndex];
 
-	//Update Mesh position and velocity
+	//Update Mesh position, rotation and velocity
 	Keyframe.Position = FMath::Lerp(PreviousKeyframe.Position, Keyframe.Position, 0.5f);
 	CapsuleComp->SetWorldLocation(Keyframe.Position);
 	CapsuleComp->SetWorldRotation(Keyframe.Rotation);
-
-	CapsuleComp->SetPhysicsLinearVelocity(Keyframe.Position);
-	b_RecentChange = true;
 
 	CapsuleComp->SetPhysicsLinearVelocity(Keyframe.Velocity.GetLocation());
 	CapsuleComp->SetPhysicsAngularVelocity(Keyframe.Velocity.GetScale3D());
 
 	PreviousKeyframe = Keyframe;
-	//If the index is not at 0, Remove the last index in the array
+	//If the index is greater than 0, Remove the last keyframe in the array
 	if (KeyframeIndex > 0)
 		KeyframeArray.RemoveAt(KeyframeIndex);
 
 	return 0;
 }
 
-//Toggles b_isReversing
-void UReverseTime::ToggleReverse()
-{
-	b_isReversing = !b_isReversing;
-}
-
-int UReverseTime::UpdateArrayActor(float DeltaTime)
+int UReverseTime::UpdateArrayActor()
 {	
+	if (!Mesh)
+		return 1;
+
 	if (!b_IsPhysicsActive)
 	{
 		Mesh->SetSimulatePhysics(b_OriginalPhysicsSim);
 		b_IsPhysicsActive = b_OriginalPhysicsSim;
 	}
 
-	if (!Mesh)
-		return 1;
-
-	else if (Timer <= 0)
+	if (Timer <= 0)
 	{
-		//Continues velocity after exiting reverse mode
+		//Continues velocity after reversing is stopped
 		if (b_RecentChange)
 		{
 			Mesh->SetPhysicsLinearVelocity(PreviousKeyframe.Velocity.GetLocation());
@@ -161,7 +163,7 @@ int UReverseTime::UpdateArrayActor(float DeltaTime)
 		if (KeyframeArray.Num() == MaxPositions && MaxPositions > 0)
 			KeyframeArray.RemoveAt(0, 1, true);
 
-		//Add info to Keyframe array
+		//Add current Actor info to Keyframe array
 		TKeyframe keyframe;
 		keyframe.Velocity = { {0.0f, 0.0f, 0.0f, 0.0f}, Mesh->GetPhysicsAngularVelocity(), {0,0,0} };
 		keyframe.Velocity.SetLocation(Mesh->GetPhysicsLinearVelocity());
@@ -175,15 +177,14 @@ int UReverseTime::UpdateArrayActor(float DeltaTime)
 	return 0;
 }
 
-int UReverseTime::UpdateArrayCharacter(float DeltaTime)
+int UReverseTime::UpdateArrayCharacter()
 {
 	if (!CapsuleComp)
 		return 1;
 
-	//If not reversing add current [Transform] and [Velocity] into array
-	else if (Timer <= 0)
+	if (Timer <= 0)
 	{
-		//Continues velocity after exiting reverse mode
+		//Continues velocity after reversing is stopped
 		if (b_RecentChange)
 		{
 			Mesh->SetPhysicsLinearVelocity(PreviousKeyframe.Velocity.GetLocation());
@@ -195,7 +196,7 @@ int UReverseTime::UpdateArrayCharacter(float DeltaTime)
 		if (KeyframeArray.Num() == MaxPositions && MaxPositions > 0)
 			KeyframeArray.RemoveAt(0, 1, true);
 
-		//Add info to Keyframe array
+		//Add current Character info to Keyframe array
 		TKeyframe keyframe;
 		keyframe.Velocity = { {0.0f, 0.0f, 0.0f, 0.0f}, CapsuleComp->GetPhysicsAngularVelocity(), {0,0,0} };
 		keyframe.Velocity.SetLocation(CapsuleComp->GetPhysicsLinearVelocity());

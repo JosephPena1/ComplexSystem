@@ -36,6 +36,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector TeleportPosition2;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	AActor* TestActor = nullptr;
+
 private:
 	ACharacter* Player = nullptr;
 

@@ -4,8 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-
-#include "Kismet/GameplayStatics.h"
 #include "Components/CapsuleComponent.h"
 
 #include "ReverseTime.generated.h"
@@ -38,14 +36,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	int ReverseCharacter();
 
-	//Toggles b_isReversing
-	UFUNCTION(BlueprintCallable)
-	void ToggleReverse();
-
 private:
 	//Updates the transform and velocity array
-	int UpdateArrayActor(float DeltaTime);
-	int UpdateArrayCharacter(float DeltaTime);
+	int UpdateArrayActor();
+	int UpdateArrayCharacter();
 
 public:
 	UPROPERTY(BlueprintReadOnly)
@@ -56,11 +50,11 @@ public:
 	float Delay = 0.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//Max positions stored in array, set to 0 for no limit
+	//Maximum Keyframes stored in array, set to 0 for no limit
 	int MaxPositions = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//Min distance to rewind the object, set to 0 to ignore distance
+	//Minimum distance to reverse the object, set to 0 to ignore distance
 	float MinDistance = 0;
 
 private:
@@ -68,7 +62,6 @@ private:
 	TKeyframe PreviousKeyframe;
 
 	AActor* Actor = nullptr;
-	ACharacter* Character = nullptr;
 	UStaticMeshComponent* Mesh = nullptr;
 	UCapsuleComponent* CapsuleComp = nullptr;
 
