@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Engine/TriggerVolume.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/Character.h"
 
 #include "MyTriggerVolume.generated.h"
 
@@ -17,6 +19,9 @@ public:
 
 	virtual void BeginPlay() override;
 
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+
 private:
 	UFUNCTION()
 	//Overlap Begin function
@@ -28,4 +33,14 @@ private:
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector TeleportPosition;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector TeleportPosition2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	AActor* TestActor = nullptr;
+
+private:
+	ACharacter* Player = nullptr;
+
+	bool b_IsAcross = false;
 };

@@ -4,9 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-
-#include "Kismet/GameplayStatics.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 
 #include "ReverseTime.generated.h"
 
@@ -33,19 +32,27 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable)
-	//Reverses an Actor with this component (If using MinDistance give CapsuleComponent)
-	int ReverseActor(UCapsuleComponent* CapsuleComponent = nullptr);
+	//Reverses the component owner if they have a StaticMeshComponent
+	int ReverseActor();
 	UFUNCTION(BlueprintCallable)
+	//Reverses the component owner if they have a CapsuleComponent
 	int ReverseCharacter();
 
-	//Toggles b_isReversing
-	UFUNCTION(BlueprintCallable)
-	void ToggleReverse();
+	UFUNCTION()
+	//Called when the component is colliding with an actor
+	void OnOverlapBegin(UPrimitiveComponent* OverlapComponent, AActor* OtherActor,
+			UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+			bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	//Called when the component is no longer colliding with an actor
+	void OnOverlapEnd(UPrimitiveComponent* OverlapComponent, AActor* OtherActor,
+			UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 private:
-	//Updates the transform and velocity array
-	int UpdateArrayActor(float DeltaTime);
-	int UpdateArrayCharacter(float DeltaTime);
+	//Updates the Keyframe array with the owner's current info
+	int UpdateArrayActor();
+	int UpdateArrayCharacter();
 
 public:
 	UPROPERTY(BlueprintReadOnly)
@@ -56,24 +63,32 @@ public:
 	float Delay = 0.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//Max positions stored in array, set to 0 for no limit
+	//Maximum Keyframes stored in array, set to 0 for no limit
 	int MaxPositions = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//Min distance to rewind the object, set to 0 to ignore distance
-	float MinDistance = 0;
+	//Wether you want the object to reverse when you get close to it or not
+	bool b_UsingDistance = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//The radius of the sphere collider, no affect if UsingDistance is false 
+	float MaxRadius = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool b_IsNear = false;
 
 private:
 	TArray<TKeyframe> KeyframeArray;
 	TKeyframe PreviousKeyframe;
 
 	AActor* Actor = nullptr;
-	ACharacter* Character = nullptr;
 	UStaticMeshComponent* Mesh = nullptr;
 	UCapsuleComponent* CapsuleComp = nullptr;
-
+	USphereComponent* SphereCollider;
+	
 	float Timer = 0.0f;
 	bool b_RecentChange = false;
 	bool b_IsPhysicsActive = true;
 	bool b_OriginalPhysicsSim = false;
+
 };
